@@ -21,3 +21,4 @@ def send_otp(email, otp):
 
     except Exception as e:
         print(" Email error:", e)
+        
