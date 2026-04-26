@@ -1,0 +1,40 @@
+name: Deploy khakhao-user-api
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Stop & remove existing container
+        run: |
+          docker rm -f khakhao-user-api || true
+
+      - name: Build Docker image
+        run: |
+          docker build -t khakhao-user-api .
+
+      - name: Run container
+        run: |
+          docker run -d \
+            --name khakhao-user-api \
+            --network kyakhao-network-2 \
+            -p 8088:8000 \
+            -e DB_NAME=kyakhaodb-2 \
+            -e DB_USER=kyakhao-2 \
+            -e DB_PASSWORD=12345678 \
+            -e DB_HOST=kyakhao-db-2 \
+            -e DB_PORT=5432 \
+            khakhao-user-api
+
+      - name: Verify container is running
+        run: |
+          sleep 3
+          docker ps | grep khakhao-user-api
