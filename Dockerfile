@@ -14,6 +14,7 @@ RUN apt-get update && \
 
 # Set up working directory
 WORKDIR /app
+ENV PYTHONPATH=/app/Admin_api
 
 # Install Python dependencies
 COPY requirements.txt .
@@ -43,4 +44,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 ENTRYPOINT ["/app/entrypoint.sh"]
 
 # Default command (can be overridden in docker-compose)
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+CMD ["uvicorn", "Admin_api.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]

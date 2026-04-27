@@ -1,19 +1,29 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
-from .database import engine, get_db
-from .models import Base, User, UserRole
-from .schemas import RegisterSchema, LoginSchema, VerifyOTP, UserResponse
-from .auth import (
+from app.database.database import engine, get_db
+from app.models.auth import Base, User, UserRole
+from app.schemas.auth import RegisterSchema, LoginSchema, VerifyOTP, UserResponse
+from app.auth.auth import (
     hash_password, verify_password, create_token, 
     security, get_current_user, require_admin, require_superadmin
 )
-from .otp import generate_otp
-from .email_utils import send_otp
+from app.auth.otp import generate_otp
+from app.auth.email_utils import send_otp
 from jose import jwt
-from .auth import SECRET_KEY, ALGORITHM
+from app.auth.auth import SECRET_KEY, ALGORITHM
+# from app.api.restaurant_add import restaurant
+from app.api.restaurant_add import router
+from app.api import restaurant_list, restaurant_detail, restaurant_edit
+from app.api.dishes import router as dishes_router
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+import os
 
-Base.metadata.create_all(bind=engine)
+load_dotenv()
+
+Base.metadata.create_all(bind=engine, checkfirst=True)
 
 app = FastAPI(
     title="ADMIN API",
@@ -21,6 +31,21 @@ app = FastAPI(
     version="2.0.0"
 )
 
+# ✅ CORS Middleware - Frontend se requests allow krne ke liye
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Production mein sirf frontend URL dena (e.g., ["http://localhost:3000"])
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ── Media files ─────────────────────────────
+os.makedirs("media", exist_ok=True)
+app.mount("/media", StaticFiles(directory="media"), name="media")
+
+app.include_router(router)
+app.include_router(dishes_router)
 @app.get("/health")
 def health_check():
     return {"status": "OK"}

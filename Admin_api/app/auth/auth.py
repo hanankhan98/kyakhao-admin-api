@@ -1,17 +1,18 @@
+import os
 from passlib.context import CryptContext
 from jose import jwt
 from datetime import datetime, timedelta
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
-from .database import get_db
-from .models import User
+from app.database.database import get_db
+from app.models.auth import User
 
-SECRET_KEY = "mysupersecretkeythatshouldbeatleast32characterslong123"
+SECRET_KEY = os.getenv("SECRET_KEY", "kyakhao-secret-key-2026")
 ALGORITHM = "HS256"
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
+      
 def hash_password(password: str):
     password = password.encode("utf-8")[:72]  
     return pwd_context.hash(password)
