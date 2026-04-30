@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.env
+.env.local
+.env.*.local
+media/dishes/*
+media/restaurants/*
+!media/dishes/.gitkeep
+!media/restaurants/.gitkeep
