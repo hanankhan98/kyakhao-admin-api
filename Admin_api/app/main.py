@@ -55,6 +55,11 @@ app.mount("/media", StaticFiles(directory="media"), name="media")
 app.include_router(router)
 app.include_router(dishes_router)
 app.include_router(public_router)
+
+
+@app.options("/{path:path}")
+def prelight(path: str):
+    return Response(status_code=200)
 @app.get("/health")
 def health_check():
     return {"status": "OK"}
