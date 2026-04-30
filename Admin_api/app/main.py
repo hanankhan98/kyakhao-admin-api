@@ -42,8 +42,8 @@ app = FastAPI(
 # taake wildcard (*) origin ke saath koi CORS error na aaye
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=["http://202.163.113.251:3003"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
