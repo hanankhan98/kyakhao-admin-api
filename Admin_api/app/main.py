@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.responses import Response
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from app.database.database import engine, get_db
@@ -60,6 +61,7 @@ app.include_router(public_router)
 @app.options("/{path:path}")
 def prelight(path: str):
     return Response(status_code=200)
+
 @app.get("/health")
 def health_check():
     return {"status": "OK"}
