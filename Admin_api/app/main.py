@@ -24,7 +24,12 @@ import os
 
 load_dotenv()
 
-Base.metadata.create_all(bind=engine, checkfirst=True)
+# ✅ Safe startup: Agar DB temporarily down ho toh app crash na kare
+try:
+    Base.metadata.create_all(bind=engine, checkfirst=True)
+except Exception as e:
+    print(f"[WARNING] Database connection failed during startup: {e}")
+    print("[WARNING] Tables will not be auto-created. Ensure DB is running and run migrations manually.")
 
 app = FastAPI(
     title="ADMIN API",
@@ -33,10 +38,12 @@ app = FastAPI(
 )
 
 # ✅ CORS Middleware - Frontend se requests allow krne ke liye
+# Bearer token based auth hai (cookies nahi), isliye allow_credentials=False rakha hai
+# taake wildcard (*) origin ke saath koi CORS error na aaye
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Production mein sirf frontend URL dena (e.g., ["http://localhost:3000"])
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
