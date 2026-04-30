@@ -6,7 +6,7 @@ from app.database.database import engine, get_db
 from app.models.auth import Base, User, UserRole
 from app.schemas.auth import RegisterSchema, LoginSchema, VerifyOTP, UserResponse
 from app.auth.auth import (
-    hash_password, verify_password, create_token, 
+    hash_password, verify_password, create_token,
     security, get_current_user, require_admin, require_superadmin,
     SECRET_KEY, ALGORITHM
 )
@@ -25,11 +25,11 @@ import traceback
 
 load_dotenv()
 
-# ✅ Safe DB startup
+# ================== DB INIT ==================
 try:
     Base.metadata.create_all(bind=engine, checkfirst=True)
 except Exception as e:
-    print(f"[WARNING] Database connection failed during startup: {e}")
+    print(f"[WARNING] DB connection failed: {e}")
 
 # ================== APP INIT ==================
 app = FastAPI(
@@ -38,7 +38,7 @@ app = FastAPI(
     version="2.0.0"
 )
 
-# ================== CORS (FIRST) ==================
+# ================== CORS ==================
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -50,26 +50,24 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-# ==================================================
 
-# ================== EXCEPTION LOGGER ==================
+# ================== ERROR LOGGER ==================
 class LogExceptionsMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         try:
             return await call_next(request)
         except Exception as exc:
-            print("=== UNHANDLED EXCEPTION IN FASTAPI ===")
+            print("=== UNHANDLED EXCEPTION ===")
             traceback.print_exc()
             return JSONResponse(
                 status_code=500,
                 content={
                     "detail": "Internal Server Error",
-                    "message": str(exc)
+                    "error": str(exc)
                 }
             )
 
 app.add_middleware(LogExceptionsMiddleware)
-# =====================================================
 
 # ================== STATIC ==================
 os.makedirs("media", exist_ok=True)
@@ -93,17 +91,15 @@ def health_check():
 # ================== REGISTER ==================
 @app.post("/register")
 def register(user: RegisterSchema, db: Session = Depends(get_db)):
-    existing = db.query(User).filter(User.email == user.email).first()
-    if existing:
+    if db.query(User).filter(User.email == user.email).first():
         raise HTTPException(400, "Email already exists")
-    
-    existing_username = db.query(User).filter(User.username == user.username).first()
-    if existing_username:
+
+    if db.query(User).filter(User.username == user.username).first():
         raise HTTPException(400, "Username already exists")
 
     otp = generate_otp()
     role = UserRole(user.role) if user.role else UserRole.USER
-    
+
     new_user = User(
         username=user.username,
         email=user.email,
@@ -117,13 +113,16 @@ def register(user: RegisterSchema, db: Session = Depends(get_db)):
 
     send_otp(user.email, otp)
 
-    return {"message": "User registered. Check email for OTP", "role_assigned": user.role or "user"}
+    return {
+        "message": "User registered. Check email for OTP",
+        "role_assigned": role.value
+    }
 
-# ================== VERIFY OTP ==================
+# ================== VERIFY ==================
 @app.post("/verify")
 def verify(data: VerifyOTP, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == data.email).first()
-    
+
     if not user or user.otp != data.otp:
         raise HTTPException(400, "Invalid OTP")
 
@@ -133,38 +132,46 @@ def verify(data: VerifyOTP, db: Session = Depends(get_db)):
 
     return {"message": "Account verified", "role": user.role.value}
 
-# ================== LOGIN (UPDATED) ==================
+# ================== LOGIN (FULL DEBUG VERSION) ==================
 @app.post("/login")
 def login(user: LoginSchema, db: Session = Depends(get_db)):
     try:
+        print(f"[LOGIN] Attempt: {user.email}")
+
         db_user = db.query(User).filter(User.email == user.email).first()
-        
+        print("[LOGIN] User:", db_user)
+
         if not db_user:
-            raise HTTPException(status_code=400, detail="Invalid credentials")
-        
+            raise HTTPException(400, "Invalid credentials")
+
+        print("[LOGIN] Checking password...")
         if not verify_password(user.password, db_user.hashed_password):
-            raise HTTPException(status_code=400, detail="Invalid credentials")
-        
-        if not db_user.is_verified:
-            raise HTTPException(status_code=400, detail="Please verify your account first")
-        
+            raise HTTPException(400, "Invalid credentials")
+
+        print("[LOGIN] Checking verification...")
+        if not getattr(db_user, "is_verified", False):
+            raise HTTPException(400, "Please verify your account first")
+
+        print("[LOGIN] Creating token...")
         token = create_token({
             "sub": db_user.email,
-            "role": db_user.role.value
+            "role": db_user.role.value if db_user.role else "user"
         })
-        
+
+        print("[LOGIN] SUCCESS")
+
         return {
             "access_token": token,
             "token_type": "bearer",
-            "role": db_user.role.value
+            "role": db_user.role.value if db_user.role else "user"
         }
 
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Login error: {e}")
+        print("🔥 LOGIN ERROR:", str(e))
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail="Internal server error during login")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # ================== ME ==================
 @app.get("/me", response_model=UserResponse)
@@ -172,19 +179,16 @@ def get_me(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db)
 ):
-    token = credentials.credentials
-    
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
         email = payload.get("sub")
     except jwt.JWTError:
         raise HTTPException(401, "Invalid token")
-    
+
     user = db.query(User).filter(User.email == email).first()
-    
     if not user:
         raise HTTPException(404, "User not found")
-    
+
     return user
 
 # ================== USER ==================
@@ -192,26 +196,19 @@ def get_me(
 def user_dashboard(current_user: User = Depends(get_current_user)):
     if current_user.role != UserRole.USER:
         raise HTTPException(403, "Only for users")
-    
-    return {
-        "message": f"Welcome User {current_user.username}",
-        "role": current_user.role.value
-    }
+
+    return {"message": f"Welcome {current_user.username}", "role": current_user.role.value}
 
 # ================== ADMIN ==================
 @app.get("/admin/dashboard")
 def admin_dashboard(current_user: User = Depends(require_admin)):
     return {
         "message": f"Welcome Admin {current_user.username}",
-        "role": current_user.role.value,
-        "access_level": "admin"
+        "role": current_user.role.value
     }
 
 @app.get("/admin/users")
-def admin_get_users(
-    current_user: User = Depends(require_admin),
-    db: Session = Depends(get_db)
-):
+def admin_users(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     users = db.query(User).all()
     return [
         {"id": u.id, "username": u.username, "email": u.email, "role": u.role.value}
@@ -223,42 +220,32 @@ def admin_get_users(
 def superadmin_dashboard(current_user: User = Depends(require_superadmin)):
     return {
         "message": f"Welcome Superadmin {current_user.username}",
-        "role": current_user.role.value,
-        "access_level": "super"
+        "role": current_user.role.value
     }
 
 @app.delete("/superadmin/user/{user_id}")
-def superadmin_delete_user(
-    user_id: int,
-    current_user: User = Depends(require_superadmin),
-    db: Session = Depends(get_db)
-):
+def delete_user(user_id: int, current_user: User = Depends(require_superadmin), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
-    
+
     if not user:
         raise HTTPException(404, "User not found")
-    
+
     db.delete(user)
     db.commit()
 
-    return {"message": f"User {user.username} deleted by superadmin"}
+    return {"message": f"{user.username} deleted"}
 
 @app.post("/superadmin/promote/{user_id}")
-def superadmin_promote_user(
-    user_id: int,
-    new_role: str,
-    current_user: User = Depends(require_superadmin),
-    db: Session = Depends(get_db)
-):
+def promote_user(user_id: int, new_role: str, current_user: User = Depends(require_superadmin), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
-    
+
     if not user:
         raise HTTPException(404, "User not found")
-    
+
     if new_role not in ["user", "admin"]:
-        raise HTTPException(400, "Can only promote to user or admin")
-    
+        raise HTTPException(400, "Invalid role")
+
     user.role = UserRole(new_role)
     db.commit()
 
-    return {"message": f"User {user.username} promoted to {new_role}"}
+    return {"message": f"{user.username} promoted to {new_role}"}
