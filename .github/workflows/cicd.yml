@@ -1,11 +1,14 @@
 name: Deploy kyakhao-admin-api
+
 on:
   push:
     branches:
       - main
+
 jobs:
   deploy:
     runs-on: self-hosted
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -24,6 +27,7 @@ jobs:
             --name kyakhao-api-2 \
             --network kyakhao-network-2 \
             -p 8088:8000 \
+            -v /home/reflys-1/kyakhao-admin-media:/app/media \
             -e DB_NAME=kyakhaodb-2 \
             -e DB_USER=kyakhao-2 \
             -e DB_PASSWORD=12345678 \
