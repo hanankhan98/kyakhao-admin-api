@@ -65,6 +65,13 @@ def delete_restaurant(id: int, db: Session = Depends(get_db)):
     restaurant = db.query(Restaurant).filter(Restaurant.id == id).first()
     if not restaurant:
         raise HTTPException(status_code=404, detail="Restaurant not found")
+    
+    # Logo aur banner files delete karo agar hain
+    if restaurant.logo and os.path.exists(restaurant.logo):
+        os.remove(restaurant.logo)
+    if restaurant.banner and os.path.exists(restaurant.banner):
+        os.remove(restaurant.banner)
+    
     db.delete(restaurant)
     db.commit()
     return {"message": "Restaurant deleted successfully"}
@@ -95,7 +102,7 @@ def upload_logo(
 
     ext = file.filename.split(".")[-1]
     filename = f"logo_{uuid.uuid4().hex}.{ext}"
-    filepath = os.path.join(MEDIA_DIR, filename)
+    filepath = os.path.join(MEDIA_DIR, filename).replace("\\", "/")
 
     with open(filepath, "wb") as f:
         shutil.copyfileobj(file.file, f)
@@ -133,7 +140,7 @@ def upload_banner(
 
     ext = file.filename.split(".")[-1]
     filename = f"banner_{uuid.uuid4().hex}.{ext}"
-    filepath = os.path.join(MEDIA_DIR, filename)
+    filepath = os.path.join(MEDIA_DIR, filename).replace("\\", "/")
 
     with open(filepath, "wb") as f:
         shutil.copyfileobj(file.file, f)

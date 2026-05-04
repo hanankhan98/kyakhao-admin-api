@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query, status
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 from typing import Optional, Annotated
 import os, shutil, uuid
 
@@ -35,7 +36,7 @@ def _validate_image(file: UploadFile):
 def _save_file(file: UploadFile) -> str:
     ext = file.filename.split(".")[-1]
     filename = f"{uuid.uuid4().hex}.{ext}"
-    filepath = os.path.join(MEDIA_DIR, filename)
+    filepath = os.path.join(MEDIA_DIR, filename).replace("\\", "/")
     with open(filepath, "wb") as f:
         shutil.copyfileobj(file.file, f)
     return filepath
@@ -182,6 +183,7 @@ def upload_additional_images(
         filepath = _save_file(file)
         dish.additional_images.append(filepath)
 
+    flag_modified(dish, "additional_images")
     db.commit()
     db.refresh(dish)
     return dish

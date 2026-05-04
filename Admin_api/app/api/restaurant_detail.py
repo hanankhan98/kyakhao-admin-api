@@ -1,3 +1,7 @@
+# ⚠️ WARNING: This file is NOT included in main.py and is currently UNUSED.
+# Restaurant detail (GET /{id}) functionality exists in restaurant_add.py.
+# Do NOT modify this file expecting changes to take effect.
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.models.restaurant import Restaurant
