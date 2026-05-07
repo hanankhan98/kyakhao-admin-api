@@ -10,6 +10,7 @@ class Dish(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), nullable=False)
     category = Column(String(100))
+    cuisine = Column(String(100), nullable=True)
     selling_price = Column(Float, default=0.0)
     cost_price = Column(Float, default=0.0)
     discounted_price = Column(Float, nullable=True)

@@ -50,6 +50,7 @@ def _dish_to_public(dish: Dish, request: Request) -> dict:
         "id": dish.id,
         "name": dish.name,
         "category": dish.category,
+        "cuisine": dish.cuisine,
         "selling_price": dish.selling_price,
         "discounted_price": dish.discounted_price,
         "delivery": dish.delivery,
@@ -62,6 +63,7 @@ def _dish_to_public(dish: Dish, request: Request) -> dict:
             _build_image_url(request, img) for img in (dish.additional_images or [])
         ],
         "status": dish.status,
+        "expiry_date": dish.expiry_date.isoformat() if dish.expiry_date else None,
         "date_added": dish.date_added.isoformat() if dish.date_added else None,
         "updated_at": dish.updated_at.isoformat() if dish.updated_at else None,
         "restaurant_id": dish.restaurant_id,

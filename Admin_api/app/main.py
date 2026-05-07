@@ -16,6 +16,7 @@ from jose import jwt
 from app.api.restaurant_add import router
 from app.api.dishes import router as dishes_router
 from app.api.public import router as public_router
+from app.api.ai_pick import router as ai_pick_router
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -78,6 +79,7 @@ app.mount("/media", StaticFiles(directory="media"), name="media")
 app.include_router(router)
 app.include_router(dishes_router)
 app.include_router(public_router)
+app.include_router(ai_pick_router)
 
 # ================== PREFLIGHT ==================
 @app.options("/{path:path}")

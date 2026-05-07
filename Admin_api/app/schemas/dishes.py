@@ -6,6 +6,7 @@ from datetime import datetime
 class DishCreate(BaseModel):
     name: str
     category: Optional[str] = None
+    cuisine: Optional[str] = None
     selling_price: float = 0.0
     cost_price: float = 0.0
     discounted_price: Optional[float] = None
@@ -18,12 +19,14 @@ class DishCreate(BaseModel):
     cover_image: Optional[str] = None
     additional_images: list[str] = []
     status: str = "draft"
+    expiry_date: Optional[datetime] = None
     restaurant_id: Optional[int] = None
  
  
 class DishUpdate(BaseModel):
     name: Optional[str] = None
     category: Optional[str] = None
+    cuisine: Optional[str] = None
     selling_price: Optional[float] = None
     cost_price: Optional[float] = None
     discounted_price: Optional[float] = None
@@ -36,6 +39,7 @@ class DishUpdate(BaseModel):
     cover_image: Optional[str] = None
     additional_images: Optional[list[str]] = None
     status: Optional[str] = None
+    expiry_date: Optional[datetime] = None
     restaurant_id: Optional[int] = None
  
  
@@ -43,6 +47,7 @@ class DishResponse(BaseModel):
     id: int
     name: str
     category: Optional[str]
+    cuisine: Optional[str] = None
     selling_price: float
     cost_price: float
     discounted_price: Optional[float]
@@ -55,6 +60,7 @@ class DishResponse(BaseModel):
     cover_image: Optional[str]
     additional_images: Optional[list[str]] = []
     status: str
+    expiry_date: Optional[datetime] = None
     date_added: datetime
     restaurant_id: Optional[int]
  
