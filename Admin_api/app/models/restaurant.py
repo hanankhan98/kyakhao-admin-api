@@ -15,7 +15,7 @@ class Restaurant(Base):
     registration_number = Column(String, nullable=True)
 
     # Personal Details
-    first_name = Column(String, nullable=True)
+    name = Column(String, nullable=True)
     last_name = Column(String, nullable=True)
     contact_number = Column(String, nullable=True)
     phone_number = Column(String, nullable=True)
@@ -33,6 +33,5 @@ class Restaurant(Base):
     account_holder_name = Column(String, nullable=True)
     account_number = Column(String, nullable=True)
     ifsc_code = Column(String, nullable=True)
-
 
     dishes = relationship("Dish", back_populates="restaurant")

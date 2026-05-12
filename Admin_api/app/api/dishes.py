@@ -48,7 +48,6 @@ def get_dishes(
     skip: int = 0,
     limit: int = 20,
     status: Optional[str] = Query(None, description="draft ya published"),
-    category: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -57,8 +56,6 @@ def get_dishes(
 
     if status:
         query = query.filter(Dish.status == status)
-    if category:
-        query = query.filter(Dish.category == category)
     if search:
         query = query.filter(Dish.name.ilike(f"%{search}%"))
 
@@ -187,6 +184,51 @@ def upload_additional_images(
     db.commit()
     db.refresh(dish)
     return dish
+
+
+# ── Cover Image Delete ───────────────────────────────────────────────────────
+@router.delete("/{dish_id}/cover-image", status_code=204)
+def delete_cover_image(
+    dish_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin)
+):
+    """Dish ki cover image delete karo"""
+    dish = db.query(Dish).filter(Dish.id == dish_id).first()
+    if not dish:
+        raise HTTPException(status_code=404, detail="Dish nahi mili")
+
+    if dish.cover_image and os.path.exists(dish.cover_image):
+        os.remove(dish.cover_image)
+
+    dish.cover_image = None
+    db.commit()
+    return
+
+
+# ── Additional Image Delete ──────────────────────────────────────────────────
+@router.delete("/{dish_id}/additional-images", status_code=204)
+def delete_additional_image(
+    dish_id: int,
+    image_url: str = Query(..., description="Delete karne wali image ka URL"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin)
+):
+    """Dish ki specific additional image delete karo"""
+    dish = db.query(Dish).filter(Dish.id == dish_id).first()
+    if not dish:
+        raise HTTPException(status_code=404, detail="Dish nahi mili")
+
+    if not dish.additional_images or image_url not in dish.additional_images:
+        raise HTTPException(status_code=404, detail="Image nahi mili")
+
+    if os.path.exists(image_url):
+        os.remove(image_url)
+
+    dish.additional_images.remove(image_url)
+    flag_modified(dish, "additional_images")
+    db.commit()
+    return
 
 
 # ── Status Toggle (Draft ↔ Published) ────────────────────────────────────────

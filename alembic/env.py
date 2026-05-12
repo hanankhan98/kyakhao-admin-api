@@ -3,10 +3,19 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from alembic import context
 import os
+import sys
 from dotenv import load_dotenv
 
 # Load .env file
 load_dotenv()
+
+# Add Admin_api to path so we can import app modules
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "Admin_api"))
+
+from app.database.database import Base
+
+# Import all models so they are registered in Base.metadata
+from app.models import restaurant, dish, auth, ai_pick
 
 config = context.config
 
@@ -25,7 +34,7 @@ config.set_main_option("sqlalchemy.url", DATABASE_URL)
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-target_metadata = None
+target_metadata = Base.metadata
 
 def run_migrations_offline() -> None:
     url = config.get_main_option("sqlalchemy.url")

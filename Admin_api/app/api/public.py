@@ -25,7 +25,7 @@ def _build_image_url(request: Request, path: Optional[str]) -> Optional[str]:
 
 
 def _restaurant_to_public(restaurant: Restaurant, request: Request) -> dict:
-    """Serialize restaurant with only public-safe fields."""
+    """Serialize restaurant with public-safe fields."""
     return {
         "id": restaurant.id,
         "business_name": restaurant.business_name,
@@ -40,31 +40,35 @@ def _restaurant_to_public(restaurant: Restaurant, request: Request) -> dict:
         "contact_number": restaurant.contact_number,
         "phone_number": restaurant.phone_number,
         "email": restaurant.email,
-        # Sensitive fields like tax_id, bank details are EXCLUDED
+        "birth_date": restaurant.birth_date,
+        "name": restaurant.name,
+        "last_name": restaurant.last_name,
+        "bank_name": restaurant.bank_name,
+        "account_holder_name": restaurant.account_holder_name,
+        "account_number": restaurant.account_number,
+        "ifsc_code": restaurant.ifsc_code,
     }
 
 
 def _dish_to_public(dish: Dish, request: Request) -> dict:
-    """Serialize dish with public-safe fields."""
+    """Serialize dish with public-safe data."""
     return {
         "id": dish.id,
         "name": dish.name,
-        "category": dish.category,
         "cuisine": dish.cuisine,
-        "selling_price": dish.selling_price,
-        "discounted_price": dish.discounted_price,
-        "delivery": dish.delivery,
-        "add_discount": dish.add_discount,
-        "return_policy": dish.return_policy,
-        "short_description": dish.short_description,
+        "price": dish.price,
+        "meal_type": dish.meal_type,
+        "meal_time": dish.meal_time,
+        "texture": dish.texture,
+        "dietary_type": dish.dietary_type,
+        "calories": dish.calories,
+        "spicy": dish.spicy,
         "long_description": dish.long_description,
         "cover_image": _build_image_url(request, dish.cover_image),
         "additional_images": [
             _build_image_url(request, img) for img in (dish.additional_images or [])
         ],
         "status": dish.status,
-        "expiry_date": dish.expiry_date.isoformat() if dish.expiry_date else None,
-        "date_added": dish.date_added.isoformat() if dish.date_added else None,
         "updated_at": dish.updated_at.isoformat() if dish.updated_at else None,
         "restaurant_id": dish.restaurant_id,
     }
@@ -142,7 +146,6 @@ def get_public_dishes(
     request: Request,
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
-    category: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
     restaurant_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
@@ -150,8 +153,6 @@ def get_public_dishes(
     """List all dishes (public-safe data only)."""
     query = db.query(Dish)
 
-    if category:
-        query = query.filter(Dish.category == category)
     if search:
         query = query.filter(Dish.name.ilike(f"%{search}%"))
     if restaurant_id:

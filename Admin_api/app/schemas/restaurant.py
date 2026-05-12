@@ -11,7 +11,7 @@ class RestaurantBase(BaseModel):
     registration_number: Optional[str] = None
 
     # Personal Details
-    first_name: Optional[str] = None
+    name: Optional[str] = None
     last_name: Optional[str] = None
     contact_number: Optional[str] = None
     phone_number: Optional[str] = None
@@ -40,7 +40,7 @@ class _ValidationMixin(BaseModel):
                 raise ValueError('Special characters are not allowed')
         return v
 
-    @field_validator('first_name', 'last_name', 'city', 'country', 'bank_name', 'account_holder_name', mode='before', check_fields=False)
+    @field_validator('name', 'last_name', 'city', 'country', 'bank_name', 'account_holder_name', mode='before', check_fields=False)
     @classmethod
     def letters_and_spaces_only(cls, v):
         if v is not None and v != "":
