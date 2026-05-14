@@ -19,7 +19,7 @@ class Dish(Base):
     spicy = Column(Boolean, default=False)
     long_description = Column(Text, nullable=True)
     cover_image = Column(String(500), nullable=True)
-    additional_images = Column(JSON, default=list)
+    additional_images = Column(JSON, default=lambda: [])
     status = Column(String(20), default="draft")
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
  

@@ -40,18 +40,18 @@ class DishResponse(BaseModel):
     id: int
     name: str
     cuisine: Optional[str] = None
-    price: float
-    meal_type: Optional[str]
+    price: Optional[float] = None
+    meal_type: Optional[str] = None
     meal_time: Optional[str] = None
     texture: Optional[str] = None
-    dietary_type: Optional[str]
-    calories: Optional[int]
-    spicy: bool
-    long_description: Optional[str]
-    cover_image: Optional[str]
-    additional_images: Optional[list[str]] = []
-    status: str
-    restaurant_id: Optional[int]
+    dietary_type: Optional[str] = None
+    calories: Optional[int] = None
+    spicy: Optional[bool] = None
+    long_description: Optional[str] = None
+    cover_image: Optional[str] = None
+    additional_images: Optional[list[str]] = None
+    status: Optional[str] = None
+    restaurant_id: Optional[int] = None
 
     class Config:
         from_attributes = True

@@ -172,15 +172,14 @@ def upload_additional_images(
     if not dish:
         raise HTTPException(status_code=404, detail="Dish nahi mili")
 
-    if dish.additional_images is None:
-        dish.additional_images = []
+    images = list(dish.additional_images) if dish.additional_images else []
 
     for file in files:
         _validate_image(file)
         filepath = _save_file(file)
-        dish.additional_images.append(filepath)
+        images.append(filepath)
 
-    flag_modified(dish, "additional_images")
+    dish.additional_images = images
     db.commit()
     db.refresh(dish)
     return dish
@@ -219,14 +218,15 @@ def delete_additional_image(
     if not dish:
         raise HTTPException(status_code=404, detail="Dish nahi mili")
 
-    if not dish.additional_images or image_url not in dish.additional_images:
+    images = list(dish.additional_images) if dish.additional_images else []
+    if not images or image_url not in images:
         raise HTTPException(status_code=404, detail="Image nahi mili")
 
     if os.path.exists(image_url):
         os.remove(image_url)
 
-    dish.additional_images.remove(image_url)
-    flag_modified(dish, "additional_images")
+    images.remove(image_url)
+    dish.additional_images = images
     db.commit()
     return
 
