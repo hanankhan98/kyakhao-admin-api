@@ -172,7 +172,13 @@ def upload_additional_images(
     if not dish:
         raise HTTPException(status_code=404, detail="Dish nahi mili")
 
-    images = list(dish.additional_images) if dish.additional_images else []
+    if not files:
+        raise HTTPException(status_code=400, detail="Koi file upload nahi ki gayi")
+
+    # Ensure additional_images is a list (handles NULL from old DB rows)
+    images = []
+    if dish.additional_images is not None:
+        images = list(dish.additional_images)
 
     for file in files:
         _validate_image(file)
