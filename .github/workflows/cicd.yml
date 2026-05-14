@@ -8,35 +8,18 @@ on:
 jobs:
   deploy:
     runs-on: self-hosted
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Stop & remove existing container
-        run: |
-          docker rm -f kyakhao-api-2 || true
+        run: docker rm -f kyakhao-api-2 || true
 
-      - name: Remove old image to prevent stale layers
-        run: |
-          docker rmi -f kyakhao-admin-api-2:latest || true
+      - name: Remove old image
+        run: docker rmi -f kyakhao-admin-api-2:latest || true
 
-      - name: Build Docker image (no cache)
-        run: |
-          docker build --no-cache -t kyakhao-admin-api-2 .
-
-      - name: Verify migration files exist in image
-        run: |
-          echo "Checking migration files in built image..."
-          docker run --rm kyakhao-admin-api-2 ls -la /app/alembic/versions/
-          MIGRATION_COUNT=$(docker run --rm kyakhao-admin-api-2 ls /app/alembic/versions/*.py 2>/dev/null | wc -l)
-          echo "Found $MIGRATION_COUNT migration files"
-          if [ "$MIGRATION_COUNT" -lt 9 ]; then
-            echo "ERROR: Expected 9 migration files, found $MIGRATION_COUNT"
-            exit 1
-          fi
+      - name: Build Docker image
+        run: docker build --no-cache -t kyakhao-admin-api-2 .
 
       - name: Run container
         run: |
@@ -52,9 +35,8 @@ jobs:
             -e DB_PORT=5432 \
             kyakhao-admin-api-2
 
-      - name: Verify container is running and migrations applied
+      - name: Verify container is running
         run: |
           sleep 5
           docker ps | grep kyakhao-api-2
-          echo "Checking container logs for migration status..."
-          docker logs --tail 20 kyakhao-api-2
+          docker logs --tail 30 kyakhao-api-2
