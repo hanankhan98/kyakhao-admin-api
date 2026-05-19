@@ -17,11 +17,10 @@ os.makedirs(MEDIA_DIR, exist_ok=True)
 
 
 def _validate_image(file: UploadFile):
-    allowed = {"image/jpeg", "image/png", "image/jpg"}
-    if file.content_type not in allowed:
+    if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(
             status_code=400,
-            detail=f"Sirf JPG aur PNG allowed hain. Invalid file: {file.filename}"
+            detail=f"Sirf image files allowed hain. Invalid file: {file.filename}"
         )
     file.file.seek(0, 2)
     size = file.file.tell()
