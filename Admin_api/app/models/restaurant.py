@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Float
 from app.database.database import Base
 from sqlalchemy.orm import relationship
 
@@ -27,6 +27,10 @@ class Restaurant(Base):
     description = Column(String, nullable=True)
     logo = Column(String, nullable=True)
     banner = Column(String, nullable=True)
+
+    # Location
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
 
     # Bank Details
     bank_name = Column(String, nullable=True)

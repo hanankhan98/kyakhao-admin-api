@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, field_validator, Field
 from typing import Optional
 import re
 
@@ -23,6 +23,10 @@ class RestaurantBase(BaseModel):
     description: Optional[str] = None
     logo: Optional[str] = None
     banner: Optional[str] = None
+
+    # Location
+    latitude: Optional[float] = Field(default=None, ge=-90, le=90)
+    longitude: Optional[float] = Field(default=None, ge=-180, le=180)
 
     # Bank Details
     bank_name: Optional[str] = None
