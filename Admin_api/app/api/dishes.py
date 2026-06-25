@@ -236,6 +236,68 @@ def delete_additional_image(
     return
 
 
+# ── Remove meal_type from all matching dishes (field clear karo, dish nahi) ──
+@router.delete("/by-meal-type/{meal_type}", status_code=200)
+def clear_meal_type_from_dishes(
+    meal_type: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin)
+):
+    """
+    Jis bhi dish mein yeh meal_type set hai usse NULL kar do.
+    Dish delete nahi hogi, sirf meal_type field clear hogi.
+    """
+    dishes = db.query(Dish).filter(Dish.meal_type == meal_type).all()
+
+    if not dishes:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Koi dish nahi mili jisme meal_type '{meal_type}' ho"
+        )
+
+    updated_count = 0
+    for dish in dishes:
+        dish.meal_type = None
+        updated_count += 1
+
+    db.commit()
+    return {
+        "message": f"{updated_count} dishes se meal_type '{meal_type}' remove ho gaya",
+        "updated_count": updated_count
+    }
+
+
+# ── Remove cuisine from all matching dishes (field clear karo, dish nahi) ────
+@router.delete("/by-cuisine/{cuisine}", status_code=200)
+def clear_cuisine_from_dishes(
+    cuisine: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin)
+):
+    """
+    Jis bhi dish mein yeh cuisine set hai usse NULL kar do.
+    Dish delete nahi hogi, sirf cuisine field clear hogi.
+    """
+    dishes = db.query(Dish).filter(Dish.cuisine == cuisine).all()
+
+    if not dishes:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Koi dish nahi mili jisme cuisine '{cuisine}' ho"
+        )
+
+    updated_count = 0
+    for dish in dishes:
+        dish.cuisine = None
+        updated_count += 1
+
+    db.commit()
+    return {
+        "message": f"{updated_count} dishes se cuisine '{cuisine}' remove ho gaya",
+        "updated_count": updated_count
+    }
+
+
 # ── Status Toggle (Draft ↔ Published) ────────────────────────────────────────
 @router.patch("/{dish_id}/status", response_model=DishResponse)
 def toggle_status(
