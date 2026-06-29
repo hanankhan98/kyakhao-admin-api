@@ -4,6 +4,7 @@ from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from app.database.database import engine, get_db
 from app.models.auth import Base, User, UserRole
+from app.models.settings import DropdownSettings  # settings table auto-create ke liye
 from app.schemas.auth import RegisterSchema, LoginSchema, VerifyOTP, UserResponse
 from app.auth.auth import (
     hash_password, verify_password, create_token,
@@ -17,6 +18,7 @@ from app.api.restaurant_add import router
 from app.api.dishes import router as dishes_router
 from app.api.public import router as public_router
 from app.api.ai_pick import router as ai_pick_router
+from app.api.settings import router as settings_router
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -80,6 +82,7 @@ app.include_router(router)
 app.include_router(dishes_router)
 app.include_router(public_router)
 app.include_router(ai_pick_router)
+app.include_router(settings_router)
 
 # ================== PREFLIGHT ==================
 @app.options("/{path:path}")
