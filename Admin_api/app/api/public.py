@@ -2,6 +2,7 @@
 Public API endpoints for user-side consumption.
 No authentication required. Sensitive fields are excluded.
 """
+import os
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
@@ -13,14 +14,32 @@ from app.models.dish import Dish
 router = APIRouter(prefix="/public", tags=["Public"])
 
 
+def _get_public_base_url(request: Request) -> str:
+    """Return the public base URL used for generating media links."""
+    configured = os.getenv("PUBLIC_BASE_URL", "").strip()
+    if configured:
+        return configured.rstrip("/")
+
+    forwarded_proto = request.headers.get("x-forwarded-proto", "")
+    forwarded_host = request.headers.get("x-forwarded-host", "")
+    if forwarded_host:
+        proto = forwarded_proto.split(",")[0].strip() or request.url.scheme
+        host = forwarded_host.split(",")[0].strip()
+        return f"{proto}://{host}".rstrip("/")
+
+    return str(request.base_url).rstrip("/")
+
+
 def _build_image_url(request: Request, path: Optional[str]) -> Optional[str]:
-    """Convert relative image path to absolute URL."""
+    """Convert relative image path to an absolute URL."""
     if not path:
         return None
+
     # If already an absolute URL, return as-is
     if path.startswith("http://") or path.startswith("https://"):
         return path
-    base_url = str(request.base_url).rstrip("/")
+
+    base_url = _get_public_base_url(request)
     return f"{base_url}/{path.lstrip('/')}"
 
 

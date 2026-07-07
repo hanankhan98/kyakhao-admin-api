@@ -33,6 +33,7 @@ jobs:
             -e DB_PASSWORD=12345678 \
             -e DB_HOST=kyakhao-db-2 \
             -e DB_PORT=5432 \
+            -e PUBLIC_BASE_URL=http://202.163.113.251:33336 \
             kyakhao-admin-api-2
 
       - name: Verify container is running
