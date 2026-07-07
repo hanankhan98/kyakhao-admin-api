@@ -26,7 +26,7 @@ jobs:
           docker run -d \
             --name kyakhao-api-2 \
             --network kyakhao-network-2 \
-            -p 8088:8000 \
+            -p 33336:8000 \
             -v /home/reflys-1/kyakhao-admin-media:/app/media \
             -e DB_NAME=kyakhaodb-2 \
             -e DB_USER=kyakhao-2 \
