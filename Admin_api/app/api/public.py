@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.database.database import get_db
 from app.models.restaurant import Restaurant
 from app.models.dish import Dish
+from app.models.ai_pick import AIPickPreferences
 
 router = APIRouter(prefix="/public", tags=["Public"])
 
@@ -195,3 +196,74 @@ def get_public_dish(dish_id: int, request: Request, db: Session = Depends(get_db
     if not dish:
         raise HTTPException(status_code=404, detail="Dish not found")
     return _dish_to_public(dish, request)
+
+
+# ── AI Survey Config — Public ────────────────────────────────────────────────
+
+# Static allergies list — no DB needed, fixed set of common food allergies
+STATIC_ALLERGIES = [
+    {"id": "nuts",       "name": "Nuts",       "identifier": "nuts"},
+    {"id": "wheat",      "name": "Wheat",      "identifier": "wheat"},
+    {"id": "dairy",      "name": "Dairy",      "identifier": "dairy"},
+    {"id": "eggs",       "name": "Eggs",       "identifier": "eggs"},
+    {"id": "fish",       "name": "Fish",       "identifier": "fish"},
+    {"id": "shellfish",  "name": "Shellfish",  "identifier": "shellfish"},
+    {"id": "soy",        "name": "Soy",        "identifier": "soy"},
+    {"id": "gluten",     "name": "Gluten",     "identifier": "gluten"},
+]
+
+
+@router.get("/ai-survey-config")
+def get_ai_survey_config(db: Session = Depends(get_db)):
+    """
+    Public endpoint — no authentication required.
+
+    Returns the AI onboarding survey configuration:
+    - cuisines: Admin ne jo cuisines allow ki hain (from ai_pick_preferences)
+    - spice_levels: Available spice options
+    - allergies: Static list of common food allergies
+    - budget: Min/max budget range
+    - flags: suggest_new_cuisines, prioritize_healthy, consider_dietary_restrictions
+
+    Frontend is API ko call kare aur user ko wohi survey dikhaye
+    jo Admin ne configure kiya hai.
+    """
+    # Load admin preferences from DB (id=1, always single row)
+    prefs = db.query(AIPickPreferences).filter(AIPickPreferences.id == 1).first()
+
+    # Default values agar admin ne abhi config nahi ki
+    if not prefs:
+        cuisines = ["Pakistani", "Chinese", "Italian", "Mexican", "Thai", "Fast Food"]
+        spice_levels = ["Mild", "Medium", "Spicy", "Extra Spicy"]
+        budget_min = 0
+        budget_max = 50
+        suggest_new_cuisines = True
+        prioritize_healthy = False
+        consider_dietary_restrictions = False
+    else:
+        cuisines = prefs.cuisines or []
+        # Extract spice level names from spicy_levels JSON
+        spice_levels = [
+            s["name"] for s in (prefs.spicy_levels or [])
+            if isinstance(s, dict) and s.get("name")
+        ]
+        if not spice_levels:
+            spice_levels = ["Mild", "Medium", "Spicy", "Extra Spicy"]
+        budget_min = prefs.budget_min or 0
+        budget_max = prefs.budget_max or 50
+        suggest_new_cuisines = prefs.suggest_new_cuisines
+        prioritize_healthy = prefs.prioritize_healthy
+        consider_dietary_restrictions = prefs.consider_dietary_restrictions
+
+    return {
+        "cuisines": cuisines,
+        "spice_levels": spice_levels,
+        "allergies": STATIC_ALLERGIES,
+        "budget": {
+            "min": budget_min,
+            "max": budget_max,
+        },
+        "suggest_new_cuisines": suggest_new_cuisines,
+        "prioritize_healthy": prioritize_healthy,
+        "consider_dietary_restrictions": consider_dietary_restrictions,
+    }
