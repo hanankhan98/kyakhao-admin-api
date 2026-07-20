@@ -9,12 +9,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Stop & remove existing container
-        run: docker rm -f kyakhao-api-2 || true
-      - name: Remove old image
-        run: docker rmi -f kyakhao-admin-api-2:latest || true
+
       - name: Build Docker image
         run: docker build --no-cache -t kyakhao-admin-api-2 .
+
+      - name: Stop & remove existing container
+        run: docker rm -f kyakhao-api-2 || true
+
       - name: Run container
         run: |
           docker run -d \
@@ -24,6 +25,7 @@ jobs:
             -v /home/reflys-1/kyakhao-admin-media:/app/media \
             --env-file /home/reflys-1/actions-runner-adminapi/adminbeenv/.env \
             kyakhao-admin-api-2
+
       - name: Verify container is running
         run: |
           sleep 5
