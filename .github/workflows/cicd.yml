@@ -1,26 +1,20 @@
 name: Deploy kyakhao-admin-api
-
 on:
   push:
     branches:
       - main
-
 jobs:
   deploy:
     runs-on: self-hosted
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Stop & remove existing container
         run: docker rm -f kyakhao-api-2 || true
-
       - name: Remove old image
         run: docker rmi -f kyakhao-admin-api-2:latest || true
-
       - name: Build Docker image
         run: docker build --no-cache -t kyakhao-admin-api-2 .
-
       - name: Run container
         run: |
           docker run -d \
@@ -28,14 +22,8 @@ jobs:
             --network kyakhao-network-2 \
             -p 33336:8000 \
             -v /home/reflys-1/kyakhao-admin-media:/app/media \
-            -e DB_NAME=kyakhaodb-2 \
-            -e DB_USER=kyakhao-2 \
-            -e DB_PASSWORD=12345678 \
-            -e DB_HOST=kyakhao-db-2 \
-            -e DB_PORT=5432 \
-            -e PUBLIC_BASE_URL=http://202.163.113.251:33336 \
+            --env-file /home/reflys-1/actions-runner-adminapi/adminbeenv/.env \
             kyakhao-admin-api-2
-
       - name: Verify container is running
         run: |
           sleep 5
