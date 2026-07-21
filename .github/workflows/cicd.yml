@@ -13,8 +13,6 @@ jobs:
         run: docker build --no-cache -t kyakhao-admin-api-2 .
       - name: Stop & remove existing container
         run: docker rm -f kyakhao-api-2 || true
-      - name: Remove old image
-        run: docker image prune -f
       - name: Run container
         run: |
           docker run -d \
@@ -24,8 +22,3 @@ jobs:
             -v /home/reflys-1/kyakhao-admin-media:/app/media \
             --env-file /home/reflys-1/actions-runner-adminapi/adminbeenv/.env \
             kyakhao-admin-api-2
-      - name: Verify container is running
-        run: |
-          sleep 5
-          docker ps | grep kyakhao-api-2
-          docker logs --tail 30 kyakhao-api-2 is this is goof one
