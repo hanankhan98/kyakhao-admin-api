@@ -42,15 +42,12 @@ app = FastAPI(
 )
 
 # ================== CORS ==================
+cors_origins_str = os.getenv("CORS_ORIGINS", "")
+origins = [origin.strip() for origin in cors_origins_str.split(",")] if cors_origins_str else []
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://202.163.113.251:3003",
-        "http://202.163.113.251:3004",
-        "http://202.163.113.251:33333",
-        "http://localhost:3003",
-        "http://127.0.0.1:3003"
-    ],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
