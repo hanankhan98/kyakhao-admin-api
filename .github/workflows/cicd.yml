@@ -1,24 +1,29 @@
-name: Deploy kyakhao-admin-api
+name: Deploy kyakhao-admin-api on productions server
+
 on:
   push:
     branches:
       - main
+
 jobs:
   deploy:
-    runs-on: self-hosted
+    runs-on: runner-admin-be
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
       - name: Build Docker image
         run: docker build --no-cache -t kyakhao-admin-api-2 .
+
       - name: Stop & remove existing container
         run: docker rm -f kyakhao-api-2 || true
+
       - name: Run container
         run: |
           docker run -d \
             --name kyakhao-api-2 \
             --network kyakhao-network-2 \
             -p 33336:8000 \
-            -v /home/reflys-1/kyakhao-admin-media:/app/media \
-            --env-file /home/reflys-1/actions-runner-adminapi/adminbeenv/.env \
+            -v /root/kyakhao-admin-media:/app/media \
+            --env-file /root/admin-be-env/.env \
             kyakhao-admin-api-2
