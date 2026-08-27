@@ -7,7 +7,7 @@ from app.models.auth import Base, User, UserRole
 from app.models.settings import DropdownSettings  # settings table auto-create ke liye
 from app.schemas.auth import RegisterSchema, LoginSchema, VerifyOTP, UserResponse
 from app.auth.auth import (
-    hash_password, verify_password, create_token,
+    hash_password, verify_password, create_token, create_refresh_token,
     security, get_current_user, require_admin, require_superadmin,
     SECRET_KEY, ALGORITHM
 )
@@ -161,11 +161,13 @@ def login(user: LoginSchema, db: Session = Depends(get_db)):
             "sub": db_user.email,
             "role": db_user.role.value if db_user.role else "user"
         })
+        refresh_token = create_refresh_token({"sub": db_user.email})
 
         print("[LOGIN] SUCCESS")
 
         return {
             "access_token": token,
+            "refresh_token": refresh_token,
             "token_type": "bearer",
             "role": db_user.role.value if db_user.role else "user"
         }
@@ -176,6 +178,32 @@ def login(user: LoginSchema, db: Session = Depends(get_db)):
         print("🔥 LOGIN ERROR:", str(e))
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+# ================== REFRESH ==================
+@app.post("/api/v1/auth/refresh")
+def refresh_token_endpoint(body: dict, db: Session = Depends(get_db)):
+    incoming = body.get("refresh_token", "")
+    try:
+        payload = jwt.decode(incoming, SECRET_KEY, algorithms=[ALGORITHM])
+        if payload.get("type") != "refresh":
+            raise HTTPException(401, "Invalid token type")
+        email = payload.get("sub")
+        if email is None:
+            raise HTTPException(401, "Invalid refresh token")
+    except jwt.JWTError:
+        raise HTTPException(401, "Invalid or expired refresh token")
+
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(401, "User not found")
+
+    new_access = create_token({
+        "sub": user.email,
+        "role": user.role.value if user.role else "user"
+    })
+    new_refresh = create_refresh_token({"sub": user.email})
+
+    return {"access_token": new_access, "refresh_token": new_refresh}
 
 # ================== ME ==================
 @app.get("/me", response_model=UserResponse)
