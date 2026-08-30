@@ -26,4 +26,4 @@ jobs:
             -p 33336:8000 \
             -v /root/kyakhao-admin-media:/app/media \
             --env-file /root/admin-be-env/.env \
-            kyakhao-admin-api-2
+            kyakhao-admin-api-2 
